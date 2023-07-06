@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::Path};
 use serde::{Serialize, Deserialize};
 
 
@@ -18,9 +18,16 @@ impl ServerConfig {
             Err(e) => panic!("Could not read file! {e}")
         };
         
-        match serde_yaml::from_str(&file) {
+        let mut config: ServerConfig = match serde_yaml::from_str(&file) {
             Ok(res) => res,
             Err(e) => panic!("Could not parse YAML! {e}")
-        }
+        };
+        
+        config.root = match fs::canonicalize(Path::new(&config.root)) {
+            Ok(path) => path.to_str().unwrap().into(),
+            Err(e) => panic!("Config error: {e}")
+        };
+
+        config
     }
 }
